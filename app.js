@@ -281,19 +281,25 @@
         <div class="ex-scheme">${schemeHtml}</div>
         ${ref ? `<div class="ex-kg">${esc(ref.text)}</div>` : ''}
         ${sch.extra && sch.sets ? `<div class="ex-extra">${esc(sch.extra)}</div>` : ''}
-        ${sch.plus ? `<div class="plus-hint">➕ Ultima serie: più ripetizioni che puoi</div>` : ''}
         ${ex.note ? `<div class="note">💡 ${esc(ex.note)}</div>` : ''}
+        ${sch.plus ? `
+          <label class="amrap">
+            <span>➕ Ultima serie: più ripetizioni che puoi.<br><b>Quante ne hai fatte?</b></span>
+            <input type="number" inputmode="numeric" min="0" data-amrap="${ex.id}" value="${esc(st.reps || '')}" placeholder="${esc(sch.reps.split(/[\/\-–]/)[0])}" aria-label="Ripetizioni ultima serie">
+          </label>` : ''}
         <div class="big-actions">
           ${ex.restSec ? `<button class="btn big" data-act="rest" data-s="${ex.restSec}">⏱ Recupero<small>${ex.restSec} sec</small></button>` : ''}
           <button class="btn big ${st.done ? 'is-done' : 'btn-primary'}" data-act="exdone" data-id="${ex.id}">${st.done ? '✓ Fatto<small>tocca per annullare</small>' : '✓ Esercizio fatto'}</button>
         </div>
-        ${isLast || nDone === total ? `<button class="btn btn-block" style="margin-top:12px" data-act="finish">🏁 Concludi ${esc(day.title)}</button>` : ''}
+        ${isLast || nDone === total ? `
+          <div class="day-end">
+            ${scheda.extras.length ? `<div class="row">${scheda.extras.map((x, i) =>
+              `<button class="btn" data-act="go" data-view="extra" data-i="${i}">🔥 ${esc(x.title)}</button>`).join('')}</div>` : ''}
+            <button class="btn btn-block" data-act="finish">🏁 Concludi ${esc(day.title)}</button>
+          </div>` : ''}
       </article>
 
       ${renderHow(ex.name)}
-
-      ${scheda.extras.length ? `<div class="row" style="margin-top:16px">${scheda.extras.map((x, i) =>
-        `<button class="btn btn-small" data-act="go" data-view="extra" data-i="${i}">🔥 ${esc(x.title)}</button>`).join('')}</div>` : ''}
 
       <nav class="ex-nav">
         <button class="nav-btn" data-act="prev" ${idx === 0 ? 'disabled' : ''} aria-label="Esercizio precedente">←</button>
@@ -369,9 +375,7 @@
             </div>
             ${it.durationSec ? `<button class="play" data-act="extra-timer" data-i="${i}" aria-label="Avvia timer">▶</button>` : ''}
           </div>`).join('')}
-      </div>
-      ${x.items.map((it) => renderHow(it.name, true)).join('')}`;
-    loadMediaInto();
+      </div>`;
   }
 
   /* ---------- storico ---------- */
@@ -393,7 +397,7 @@
               <div class="hist-ex">
                 <b>${esc(e.name)}</b>
                 <span class="muted small">${esc(e.scheme)}</span>
-                <div>${e.sets.length ? e.sets.map((s) => `${fmtNum(s.kg) || '–'}kg × ${s.reps || '–'}`).join(' · ') : `<span class="muted">✓ ${esc(e.kg || 'fatto')}</span>`}</div>
+                <div>${e.sets.length ? e.sets.map((s) => `${fmtNum(s.kg) || '–'}kg × ${s.reps || '–'}`).join(' · ') : `<span class="muted">✓ ${esc(e.kg || 'fatto')}</span>${e.reps ? ` · <b>ultima serie: ${esc(e.reps)} rip.</b>` : ''}`}</div>
               </div>`).join('')}
           </div>
         </details>`).join('') : '<p class="muted">Nessun allenamento concluso ancora.</p>'}`;
@@ -456,7 +460,7 @@
         .filter((e) => exState(e).done)
         .map((e) => {
           const ref = kgFor(e, session.week);
-          return { name: e.name, group: e.group, scheme: schemeFor(e, session.week), kg: ref ? ref.text : '', sets: [] };
+          return { name: e.name, group: e.group, scheme: schemeFor(e, session.week), kg: ref ? ref.text : '', reps: exState(e).reps || '', sets: [] };
         }),
     });
     store.set('history', history);
@@ -586,6 +590,14 @@
     } catch (e) {
       alert('Impossibile salvare il file: ' + e.message);
     }
+  });
+
+  // ripetizioni fatte nella serie "+": salva mentre scrivi, senza ridisegnare
+  app.addEventListener('input', (ev) => {
+    const id = ev.target.dataset && ev.target.dataset.amrap;
+    if (!id || !session) return;
+    session.ex[id] = Object.assign(session.ex[id] || { done: false }, { reps: ev.target.value.trim() });
+    saveSession();
   });
 
   app.addEventListener('click', (ev) => {
