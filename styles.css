@@ -234,3 +234,18 @@ details.hist .body { padding: 0 16px 14px; }
   font-weight: 600; max-width: calc(100% - 32px); text-align: center; box-shadow: 0 6px 24px rgba(0, 0, 0, .3);
 }
 .toast[hidden] { display: none; }
+
+/* ---------- disegni esercizi ---------- */
+.draw { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 4px 0 8px; cursor: zoom-in; }
+.draw.zoom { grid-template-columns: 1fr; cursor: zoom-out; }
+.draw figure { margin: 0; background: #fff; border-radius: 12px; padding: 6px; text-align: center; }
+.draw img { width: 100%; height: auto; display: block; aspect-ratio: 1; object-fit: contain; }
+.draw figcaption { font-size: .72rem; color: #555; text-transform: uppercase; letter-spacing: .06em; }
+.draw.small { width: 150px; flex: none; margin: 0; cursor: default; gap: 4px; }
+.draw.small figure { padding: 3px; border-radius: 8px; }
+.draw.small figcaption { display: none; }
+.lib { padding: 4px 14px; }
+.lib-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.lib-row:first-child { border-top: 0; }
+.lib-name { flex: 1; min-width: 0; }
+.lib-none { width: 150px; text-align: center; }
