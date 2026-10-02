@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '8';
+  const APP_VERSION = '9';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -108,15 +108,15 @@
 
   function drawingHtml(name, small) {
     const f = findDrawing(name);
-    if (!f || !f.e.rif) return '';
-    const src = (i) => `esercizi/img/${encodeURIComponent(f.e.rif)}-${i}.svg`;
+    if (!f || !f.e.foto) return '';
+    const src = (i) => `esercizi/img/${encodeURIComponent(f.e.foto)}-${i}.jpg`;
     const approx = f.e.verificare || !f.exact;
     return `
       <div class="draw ${small ? 'small' : ''}" ${small ? '' : 'data-act="draw-zoom"'}>
         <figure><img src="${src(1)}" alt="Posizione iniziale" loading="lazy"><figcaption>Inizio</figcaption></figure>
         <figure><img src="${src(2)}" alt="Posizione finale" loading="lazy"><figcaption>Fine</figcaption></figure>
       </div>
-      ${approx && !small ? '<div class="small muted">Disegno indicativo: la scheda può indicare una variante.</div>' : ''}`;
+      ${approx && !small ? '<div class="small muted">Foto indicativa: la scheda può indicare una variante.</div>' : ''}`;
   }
 
   /* ================= navigazione ================= */
@@ -444,7 +444,7 @@
       return `
         <div class="lib-row">
           <div class="lib-name"><b>${esc(name)}</b>${sub ? `<div class="muted small">${esc(sub)}</div>` : ''}</div>
-          ${d || '<div class="lib-none muted small">nessun disegno</div>'}
+          ${d || '<div class="lib-none muted small">nessuna foto</div>'}
         </div>`;
     };
     app.innerHTML = `
@@ -458,7 +458,7 @@
       ${scheda.extras.map((x) => `
         <div class="section-title">${esc(x.title)}</div>
         <div class="card lib">${x.items.map((it) => row(it.name)).join('')}</div>`).join('')}
-      <p class="small muted">Disegni: <a href="https://github.com/everkinetic/data" target="_blank" rel="noopener">Everkinetic</a>, licenza CC BY-SA 4.0.</p>`;
+      <p class="small muted">Foto: <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noopener">Free Exercise DB</a> (pubblico dominio).</p>`;
   }
 
   /* ---------- info e gestione dati ---------- */
