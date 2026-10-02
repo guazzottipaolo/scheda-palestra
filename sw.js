@@ -1,5 +1,8 @@
-/* Service worker: l'app funziona anche senza rete (cache + aggiornamento in background). */
-const CACHE = 'scheda-v5';
+/*
+ * Service worker: prima prova la rete (così gli aggiornamenti arrivano subito),
+ * se non c'è connessione usa la copia salvata e l'app funziona lo stesso.
+ */
+const CACHE = 'scheda-v6';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './parser.js',
   './vendor/xlsx.mini.min.js', './manifest.webmanifest',
@@ -7,7 +10,12 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache: 'reload' scavalca la cache HTTP del browser (GitHub Pages la tiene 10 minuti)
+  e.waitUntil(
+    caches.open(CACHE)
+      .then((c) => c.addAll(ASSETS.map((u) => new Request(u, { cache: 'reload' }))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
@@ -21,13 +29,20 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const req = e.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  e.respondWith(
-    caches.open(CACHE).then(async (cache) => {
+  e.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    try {
+      // rete con timeout: in palestra la connessione può essere lenta
+      const res = await Promise.race([
+        fetch(req, { cache: 'no-cache' }),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000)),
+      ]);
+      if (res.ok) cache.put(req, res.clone());
+      return res;
+    } catch (err) {
       const cached = await cache.match(req, { ignoreSearch: true });
-      const network = fetch(req)
-        .then((res) => { if (res.ok) cache.put(req, res.clone()); return res; })
-        .catch(() => cached);
-      return cached || network;
-    })
-  );
+      if (cached) return cached;
+      throw err;
+    }
+  })());
 });

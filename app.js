@@ -1,6 +1,7 @@
 (function () {
   'use strict';
 
+  const APP_VERSION = '6';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -425,6 +426,8 @@
       </div>
       <p class="small muted">I dati restano solo su questo telefono. Ogni tanto esporta un backup (foto e video esclusi).</p>
 
+      <p class="small muted" style="text-align:center;margin-top:28px">Versione app: ${APP_VERSION}</p>
+
       <div class="section-title">Zona pericolosa</div>
       <button class="btn btn-block btn-danger" data-act="reset">Cancella tutti i dati</button>`;
   }
@@ -825,7 +828,20 @@
 
   /* ================= avvio ================= */
   if ('serviceWorker' in navigator && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
-    navigator.serviceWorker.register('sw.js').catch(() => {});
+    const hadController = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+      // controlla se c'è una versione nuova ogni volta che l'app torna in primo piano
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    }).catch(() => {});
+    // nuova versione installata: ricarica una volta (i dati dell'allenamento sono già salvati)
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded) return;
+      reloaded = true;
+      location.reload();
+    });
   }
   // in sviluppo: ?demo=file.xlsx carica direttamente un file servito localmente
   const demo = new URLSearchParams(location.search).get('demo');
