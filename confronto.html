@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Confronto immagini</title>
+<style>
+:root{--bg:#111418;--s:#1b1f25;--s2:#252a32;--l:#313741;--t:#f2f4f7;--m:#9aa3b0;--a:#ff7a1a;--ok:#3ccf7c;color-scheme:dark}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--t);font:16px/1.4 system-ui,sans-serif}
+main{max-width:900px;margin:0 auto;padding:16px 16px 120px} h1{font-size:1.4rem;margin:8px 0} .intro{color:var(--m)}
+h2{font-size:.8rem;letter-spacing:.1em;color:var(--m);margin:28px 2px 10px}
+article{background:var(--s);border:1px solid var(--l);border-radius:16px;padding:12px;margin-bottom:12px}
+h3{font-size:1rem;margin:0 0 10px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{display:block;border:2px solid var(--l);border-radius:12px;padding:8px;cursor:pointer;position:relative}
+.opt:has(input:checked){border-color:var(--ok);background:rgba(60,207,124,.08)}
+.opt input{position:absolute;opacity:0}
+.lab{display:block;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--m);margin-bottom:6px}
+.opt:has(input:checked) .lab{color:var(--ok)} .opt:has(input:checked) .lab::after{content:" ✓"}
+.opt:has(input:disabled){cursor:default;opacity:.6}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.pair img{width:100%;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:8px;display:block}
+.pair.photo img{object-fit:cover}
+.none{aspect-ratio:2/1;display:grid;place-items:center;color:var(--m);font-size:.85rem;border:1px dashed var(--l);border-radius:8px}
+.warn{margin:6px 0 0;font-size:.78rem;color:var(--a)}
+@media (max-width:560px){.cols{grid-template-columns:1fr}}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--s);border-top:1px solid var(--l);padding:12px 16px;display:flex;gap:12px;align-items:center;justify-content:center}
+.bar span{color:var(--m)}
+button{font:inherit;font-weight:600;min-height:48px;padding:0 18px;border-radius:12px;border:0;background:var(--a);color:#1a0d00}
+textarea{width:100%;min-height:140px;margin-top:12px;background:var(--s2);color:var(--t);border:1px solid var(--l);border-radius:12px;padding:10px;font:inherit}
+.credits{color:var(--m);font-size:.8rem;margin-top:24px} a{color:var(--a)}
+</style></head><body><main>
+<h1>Disegni o foto?</h1>
+<p class="intro">Per ogni esercizio della scheda: il <b>disegno</b> (Everkinetic) che oggi è nell'app e la <b>foto</b> (Free Exercise DB). Tocca quello che preferisci, poi premi <b>Copia scelte</b> in basso e incolla il testo nella chat.</p>
+<section><h2>GIORNO 1</h2>
+<article data-name="PANCA PIANA">
+  <h3>PANCA PIANA</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="PANCA PIANA" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/bench-press-1.svg" alt="" loading="lazy"><img src="esercizi/img/bench-press-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="PANCA PIANA" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="DECLINE PRESS">
+  <h3>DECLINE PRESS</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="DECLINE PRESS" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/decline-chest-press-1.svg" alt="" loading="lazy"><img src="esercizi/img/decline-chest-press-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="DECLINE PRESS" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leverage_Decline_Chest_Press/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leverage_Decline_Chest_Press/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="PEC FLY">
+  <h3>PEC FLY</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="PEC FLY" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/dumbbell-flys-1.svg" alt="" loading="lazy"><img src="esercizi/img/dumbbell-flys-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="PEC FLY" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Butterfly/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Butterfly/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="CURL PANCA SCOTT AL CONTRARIO">
+  <h3>CURL PANCA SCOTT AL CONTRARIO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="CURL PANCA SCOTT AL CONTRARIO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/spider-curl-with-barbell-1.svg" alt="" loading="lazy"><img src="esercizi/img/spider-curl-with-barbell-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="CURL PANCA SCOTT AL CONTRARIO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Spider_Curl/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Spider_Curl/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="CURL MARTELLO CAVI BASSI">
+  <h3>CURL MARTELLO CAVI BASSI</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="CURL MARTELLO CAVI BASSI" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/hammer-curls-with-rope-and-cable-1.svg" alt="" loading="lazy"><img src="esercizi/img/hammer-curls-with-rope-and-cable-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="CURL MARTELLO CAVI BASSI" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Hammer_Curls_-_Rope_Attachment/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Hammer_Curls_-_Rope_Attachment/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="CURL BILANCERE AL MURO">
+  <h3>CURL BILANCERE AL MURO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="CURL BILANCERE AL MURO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/biceps-curls-with-barbell-1.svg" alt="" loading="lazy"><img src="esercizi/img/biceps-curls-with-barbell-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="CURL BILANCERE AL MURO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Curl/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Curl/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+</section>
+<section><h2>GIORNO 2</h2>
+<article data-name="LAT MACHINE SBARRA">
+  <h3>LAT MACHINE SBARRA</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="LAT MACHINE SBARRA" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/v-bar-pull-down-1.svg" alt="" loading="lazy"><img src="esercizi/img/v-bar-pull-down-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="LAT MACHINE SBARRA" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Lat_Pulldown/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Lat_Pulldown/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="PULLEY TRIANGOLO">
+  <h3>PULLEY TRIANGOLO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="PULLEY TRIANGOLO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/seated-cable-rows-1.svg" alt="" loading="lazy"><img src="esercizi/img/seated-cable-rows-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="PULLEY TRIANGOLO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Cable_Rows/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Cable_Rows/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="REMATORE SU PANCA">
+  <h3>REMATORE SU PANCA</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="REMATORE SU PANCA" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/rear-deltoid-row-dumbbell-1.svg" alt="" loading="lazy"><img src="esercizi/img/rear-deltoid-row-dumbbell-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="REMATORE SU PANCA" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Incline_Row/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Incline_Row/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="PUSHDOWN BARRA SAGOMATA">
+  <h3>PUSHDOWN BARRA SAGOMATA</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="PUSHDOWN BARRA SAGOMATA" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/triceps-pushdown-with-cable-1.svg" alt="" loading="lazy"><img src="esercizi/img/triceps-pushdown-with-cable-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="PUSHDOWN BARRA SAGOMATA" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="FRENCH PRESS CORDA DAL BASSO">
+  <h3>FRENCH PRESS CORDA DAL BASSO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="FRENCH PRESS CORDA DAL BASSO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/one-arm-low-pulley-triceps-extension-with-cable-1.svg" alt="" loading="lazy"><img src="esercizi/img/one-arm-low-pulley-triceps-extension-with-cable-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="FRENCH PRESS CORDA DAL BASSO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Rope_Overhead_Triceps_Extension/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Rope_Overhead_Triceps_Extension/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="FRENCH PRESS PANCA INCLINATA CON MANUBRI">
+  <h3>FRENCH PRESS PANCA INCLINATA CON MANUBRI</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="FRENCH PRESS PANCA INCLINATA CON MANUBRI" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/incline-triceps-extensions-with-dumbbell-1.svg" alt="" loading="lazy"><img src="esercizi/img/incline-triceps-extensions-with-dumbbell-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="FRENCH PRESS PANCA INCLINATA CON MANUBRI" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Lying_Dumbbell_Tricep_Extension/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Lying_Dumbbell_Tricep_Extension/1.jpg" alt="" loading="lazy"></div><p class="warn">foto su panca piana, non inclinata</p></label>
+  </div>
+</article>
+</section>
+<section><h2>GIORNO 3</h2>
+<article data-name="PRESSA 45°">
+  <h3>PRESSA 45°</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="PRESSA 45°" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/leg-press-1.svg" alt="" loading="lazy"><img src="esercizi/img/leg-press-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="PRESSA 45°" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Press/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Press/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="LEG CURL SEDUTO">
+  <h3>LEG CURL SEDUTO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="LEG CURL SEDUTO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/seated-leg-curl-1.svg" alt="" loading="lazy"><img src="esercizi/img/seated-leg-curl-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="LEG CURL SEDUTO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Leg_Curl/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Leg_Curl/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="LEG EXTENTION">
+  <h3>LEG EXTENTION</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="LEG EXTENTION" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/leg-extensions-1.svg" alt="" loading="lazy"><img src="esercizi/img/leg-extensions-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="LEG EXTENTION" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Extensions/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Extensions/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="SHOULDER PRESS MATRIX">
+  <h3>SHOULDER PRESS MATRIX</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="SHOULDER PRESS MATRIX" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/seated-military-press-1.svg" alt="" loading="lazy"><img src="esercizi/img/seated-military-press-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="SHOULDER PRESS MATRIX" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leverage_Shoulder_Press/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leverage_Shoulder_Press/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="ALZATE LATERALI SU PANCA AL CONTRARIO">
+  <h3>ALZATE LATERALI SU PANCA AL CONTRARIO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="ALZATE LATERALI SU PANCA AL CONTRARIO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/lateral-dumbbell-raises-1.svg" alt="" loading="lazy"><img src="esercizi/img/lateral-dumbbell-raises-2.svg" alt="" loading="lazy"></div><p class="warn">disegno indicativo</p></label>
+    <label class="opt"><input type="radio" name="ALZATE LATERALI SU PANCA AL CONTRARIO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Side_Lateral_Raise/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Side_Lateral_Raise/1.jpg" alt="" loading="lazy"></div><p class="warn">foto da seduto</p></label>
+  </div>
+</article>
+<article data-name="ALZATE FRONTALI AL MURO">
+  <h3>ALZATE FRONTALI AL MURO</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="ALZATE FRONTALI AL MURO" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/front-dumbbell-raise-1.svg" alt="" loading="lazy"><img src="esercizi/img/front-dumbbell-raise-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="ALZATE FRONTALI AL MURO" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+</section>
+<section><h2>CARDIO</h2>
+<article data-name="LEG RAISE (gambe su e giù) CON KETTLEBAL ARANCIONE">
+  <h3>LEG RAISE (gambe su e giù) CON KETTLEBAL ARANCIONE</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="LEG RAISE (gambe su e giù) CON KETTLEBAL ARANCIONE" value="disegno" ><span class="lab">Disegno</span><div class="pair"><img src="esercizi/img/flat-bench-leg-raises-1.svg" alt="" loading="lazy"><img src="esercizi/img/flat-bench-leg-raises-2.svg" alt="" loading="lazy"></div></label>
+    <label class="opt"><input type="radio" name="LEG RAISE (gambe su e giù) CON KETTLEBAL ARANCIONE" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Flat_Bench_Lying_Leg_Raise/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Flat_Bench_Lying_Leg_Raise/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="PLANK">
+  <h3>PLANK</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="PLANK" value="disegno" disabled><span class="lab">Disegno</span><div class="none">nessun disegno</div></label>
+    <label class="opt"><input type="radio" name="PLANK" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Plank/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Plank/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="CORDA">
+  <h3>CORDA</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="CORDA" value="disegno" disabled><span class="lab">Disegno</span><div class="none">nessun disegno</div></label>
+    <label class="opt"><input type="radio" name="CORDA" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Rope_Jumping/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Rope_Jumping/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+<article data-name="TAPIS ROULANT - CAMMINATA VELOCE O CORSA">
+  <h3>TAPIS ROULANT - CAMMINATA VELOCE O CORSA</h3>
+  <div class="cols">
+    <label class="opt"><input type="radio" name="TAPIS ROULANT - CAMMINATA VELOCE O CORSA" value="disegno" disabled><span class="lab">Disegno</span><div class="none">nessun disegno</div></label>
+    <label class="opt"><input type="radio" name="TAPIS ROULANT - CAMMINATA VELOCE O CORSA" value="foto"><span class="lab">Foto</span><div class="pair photo"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Walking_Treadmill/0.jpg" alt="" loading="lazy"><img src="https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Walking_Treadmill/1.jpg" alt="" loading="lazy"></div></label>
+  </div>
+</article>
+</section>
+<textarea id="out" readonly placeholder="Qui compare il riepilogo delle tue scelte"></textarea>
+<p class="credits">Disegni: <a href="https://github.com/everkinetic/data">Everkinetic</a>, CC BY-SA 4.0. Foto: <a href="https://github.com/yuhonas/free-exercise-db">Free Exercise DB</a>, pubblico dominio.</p>
+</main>
+<div class="bar"><span id="count"></span><button id="copy">Copia scelte</button></div>
+<script>
+const KEY = 'confronto-scelte';
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+const arts = [...document.querySelectorAll('article')];
+arts.forEach((a) => {
+  const v = saved[a.dataset.name];
+  const i = v && a.querySelector(`input[value="${v}"]`);
+  if (i && !i.disabled) i.checked = true;
+});
+function update() {
+  const lines = [];
+  let n = 0;
+  arts.forEach((a) => {
+    const c = a.querySelector('input:checked');
+    if (c) { n++; saved[a.dataset.name] = c.value; }
+    lines.push(a.dataset.name + ': ' + (c ? c.value.toUpperCase() : '-'));
+  });
+  try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+  document.getElementById('count').textContent = n + ' / ' + arts.length + ' scelti';
+  document.getElementById('out').value = lines.join('\n');
+}
+document.addEventListener('change', update);
+update();
+const btn = document.getElementById('copy');
+btn.onclick = async () => {
+  const t = document.getElementById('out');
+  try { await navigator.clipboard.writeText(t.value); } catch (e) { t.select(); document.execCommand('copy'); }
+  btn.textContent = 'Copiato ✓';
+  setTimeout(() => { btn.textContent = 'Copia scelte'; }, 2000);
+};
+</script></body></html>
