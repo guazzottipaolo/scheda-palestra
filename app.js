@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '6';
+  const APP_VERSION = '7';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -654,7 +654,7 @@
       case 'extra-timer': {
         const it = scheda.extras[view.i].items[+el.dataset.i];
         ensureAudio();
-        startTimer(it.durationSec, it.name);
+        startTimer(it.durationSec, it.name, 'cardio');
         break;
       }
       case 'media': mediaKey = el.dataset.k; fileMedia.click(); break;
@@ -745,8 +745,10 @@
     }
   }
 
-  function startTimer(sec, label) {
+  // mode 'cardio': bip ogni 30 s, doppio bip a 15 s dalla fine, ultimi 5 secondi scanditi
+  function startTimer(sec, label, mode) {
     if (!sec) return;
+    timer.mode = mode || 'rest';
     clearTimeout(timer.hideT);
     timer.total = sec;
     timer.end = Date.now() + sec * 1000;
@@ -764,14 +766,33 @@
     clearTimeout(timer.hideT);
     tEl.hidden = true;
   }
+  function cue(left) {
+    const vib = (p) => { if (navigator.vibrate) navigator.vibrate(p); };
+    if (timer.mode !== 'cardio') {
+      if (left <= 3) beep(1568, 0.12, 0, true);
+      return;
+    }
+    const elapsed = timer.total - left;
+    if (left <= 5) {
+      beep(1568, 0.1, 0, true); // conto alla rovescia: 5, 4, 3, 2, 1
+      vib(60);
+    } else if (left === 15) {
+      beep(1319, 0.14, 0, true); // doppio bip: mancano 15 secondi
+      beep(1319, 0.14, 0.22, true);
+      vib([120, 100, 120]);
+    } else if (elapsed > 0 && elapsed % 30 === 0) {
+      beep(1047, 0.3, 0, true); // bip lungo ogni 30 secondi
+      vib(200);
+    }
+  }
   function tick() {
     const ms = timer.end - Date.now();
     const left = Math.max(0, Math.ceil(ms / 1000));
     tTime.textContent = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
     tBar.style.width = `${Math.min(100, Math.max(0, 100 - (ms / (timer.total * 1000)) * 100))}%`;
-    if (left > 0 && left <= 3 && timer.lastBeep !== left) {
+    if (left > 0 && timer.lastBeep !== left) {
       timer.lastBeep = left;
-      beep(1568, 0.12, 0, true);
+      cue(left);
     }
     if (ms <= 0 && !timer.fired) {
       timer.fired = true;
@@ -788,7 +809,7 @@
     if (!b) return;
     if (b.dataset.t === 'stop') return stopTimer();
     const d = +b.dataset.t * 1000;
-    if (timer.fired) { startTimer(Math.max(5, +b.dataset.t), tLabel.textContent); return; }
+    if (timer.fired) { startTimer(Math.max(5, +b.dataset.t), tLabel.textContent, timer.mode); return; }
     timer.end += d;
     timer.total = Math.max(1, timer.total + d / 1000);
     if (timer.end <= Date.now()) timer.end = Date.now() + 1000;
