@@ -1,5 +1,5 @@
 /* Service worker: l'app funziona anche senza rete (cache + aggiornamento in background). */
-const CACHE = 'scheda-v2';
+const CACHE = 'scheda-v3';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './parser.js',
   './vendor/xlsx.mini.min.js', './manifest.webmanifest',

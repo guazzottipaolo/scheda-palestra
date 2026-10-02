@@ -76,14 +76,6 @@
     ex.kg.forEach((k) => { if (k.from <= w) cur = k; });
     return cur || ex.kg[0] || null;
   }
-  function lastTime(name) {
-    const k = keyOf(name);
-    for (let i = history.length - 1; i >= 0; i--) {
-      const e = history[i].exercises.find((x) => keyOf(x.name) === k && x.sets.length);
-      if (e) return { h: history[i], e };
-    }
-    return null;
-  }
   function nextDayIndex() {
     const p = prog();
     const done = p.done[p.week] || [];
@@ -107,6 +99,7 @@
   /* ================= render ================= */
   function render() {
     updateWakeLock();
+    document.body.classList.toggle('has-nav', view.name === 'workout' && !!session);
     if (pendingSchede) return renderChoose();
     if (!scheda) return renderEmpty();
     switch (view.name) {
@@ -238,118 +231,86 @@
       </div>`;
   }
 
-  /* ---------- allenamento ---------- */
+  /* ---------- allenamento: un esercizio alla volta ---------- */
   function exState(ex) {
-    if (!session.ex[ex.id]) {
-      const sch = P.parseScheme(schemeFor(ex, session.week));
-      const n = Math.max(1, sch.sets || 1);
-      const ref = kgFor(ex, session.week);
-      const lt = lastTime(ex.name);
-      let kg = ref ? P.firstNumber(ref.text) : null;
-      if (kg == null && lt) kg = lt.e.sets[lt.e.sets.length - 1].kg;
-      session.ex[ex.id] = {
-        done: false,
-        sets: Array.from({ length: n }, () => ({ kg: kg == null ? '' : kg, reps: '', done: false })),
-      };
-    }
+    if (!session.ex[ex.id]) session.ex[ex.id] = { done: false };
     return session.ex[ex.id];
+  }
+
+  function currentIndex(day) {
+    let i = day.exercises.findIndex((e) => e.id === session.open);
+    if (i < 0) {
+      i = day.exercises.findIndex((e) => !exState(e).done);
+      if (i < 0) i = day.exercises.length - 1;
+      session.open = day.exercises[i].id;
+    }
+    return i;
   }
 
   function renderWorkout() {
     const day = scheda.days[session.day];
     const w = session.week;
-    if (!session.open) {
-      const first = day.exercises.find((e) => !exState(e).done);
-      session.open = first ? first.id : null;
-    }
-    const groups = groupsOf(day);
+    const idx = currentIndex(day);
+    const ex = day.exercises[idx];
+    const st = exState(ex);
+    const total = day.exercises.length;
     const nDone = day.exercises.filter((e) => exState(e).done).length;
+    const raw = schemeFor(ex, w);
+    const sch = P.parseScheme(raw);
+    const ref = kgFor(ex, w);
+    const schemeHtml = sch.sets
+      ? `${sch.sets} × ${esc(sch.reps)}${sch.plus ? '<span class="plus">+</span>' : ''}`
+      : esc(raw);
+    const isLast = idx === total - 1;
 
     app.innerHTML = `
       <header class="top">
         <button class="icon-btn" data-act="home" aria-label="Indietro">‹</button>
         <div style="flex:1;min-width:0">
           <div class="eyebrow">Settimana ${w}${weekLabel(w, day) ? ' · ' + esc(weekLabel(w, day)) : ''}</div>
-          <h1>${esc(day.title)} <span class="muted" style="font-weight:500;font-size:1rem">${nDone}/${day.exercises.length}</span></h1>
+          <h1>${esc(day.title)} <span class="muted" style="font-weight:500;font-size:1rem">${nDone}/${total} fatti</span></h1>
         </div>
       </header>
-      ${day.notes.map((n) => `<div class="note">${esc(n)}</div>`).join('')}
-      ${groups.map((g) => {
-        const exs = day.exercises.filter((e) => e.group === g);
-        const gDone = exs.every((e) => exState(e).done);
-        return `
-          <section class="group ${gDone ? 'done' : ''}">
-            <div class="group-head">
-              <h2>${esc(g)}</h2>
-              <button class="check ${gDone ? 'on' : ''}" data-act="group" data-g="${esc(g)}" aria-label="Segna ${esc(g)} come completato">✓</button>
-            </div>
-            ${exs.map((e) => renderExercise(e, w)).join('')}
-          </section>`;
-      }).join('')}
-      <div style="margin-top:24px">
-        <button class="btn btn-primary btn-block" data-act="finish">✓ Concludi ${esc(day.title)}</button>
+      <div class="progress">
+        ${day.exercises.map((e, i) => `<button class="seg ${exState(e).done ? 'on' : ''} ${i === idx ? 'cur' : ''}" data-act="jump" data-i="${i}" aria-label="${esc(e.name)}"></button>`).join('')}
       </div>
-      ${scheda.extras.length ? `<div class="row" style="margin-top:10px">${scheda.extras.map((x, i) =>
-        `<button class="btn btn-small" data-act="go" data-view="extra" data-i="${i}">🔥 ${esc(x.title)}</button>`).join('')}</div>` : ''}`;
+
+      <article class="ex-one ${st.done ? 'done' : ''}">
+        <div class="eyebrow">${esc(ex.group)} · ${idx + 1} di ${total}</div>
+        <h2 class="ex-name">${esc(ex.name)}</h2>
+        <div class="ex-scheme">${schemeHtml}</div>
+        ${ref ? `<div class="ex-kg">${esc(ref.text)}</div>` : ''}
+        ${sch.extra && sch.sets ? `<div class="ex-extra">${esc(sch.extra)}</div>` : ''}
+        ${sch.plus ? `<div class="plus-hint">➕ Ultima serie: più ripetizioni che puoi</div>` : ''}
+        ${ex.note ? `<div class="note">💡 ${esc(ex.note)}</div>` : ''}
+        <div class="big-actions">
+          ${ex.restSec ? `<button class="btn big" data-act="rest" data-s="${ex.restSec}">⏱ Recupero<small>${ex.restSec} sec</small></button>` : ''}
+          <button class="btn big ${st.done ? 'is-done' : 'btn-primary'}" data-act="exdone" data-id="${ex.id}">${st.done ? '✓ Fatto<small>tocca per annullare</small>' : '✓ Esercizio fatto'}</button>
+        </div>
+        ${isLast || nDone === total ? `<button class="btn btn-block" style="margin-top:12px" data-act="finish">🏁 Concludi ${esc(day.title)}</button>` : ''}
+      </article>
+
+      ${renderHow(ex.name)}
+
+      ${scheda.extras.length ? `<div class="row" style="margin-top:16px">${scheda.extras.map((x, i) =>
+        `<button class="btn btn-small" data-act="go" data-view="extra" data-i="${i}">🔥 ${esc(x.title)}</button>`).join('')}</div>` : ''}
+
+      <nav class="ex-nav">
+        <button class="nav-btn" data-act="prev" ${idx === 0 ? 'disabled' : ''} aria-label="Esercizio precedente">←</button>
+        <div class="nav-mid">${idx + 1} / ${total}</div>
+        <button class="nav-btn" data-act="next" ${isLast ? 'disabled' : ''} aria-label="Esercizio successivo">→</button>
+      </nav>`;
 
     loadMediaInto();
   }
 
-  function renderExercise(ex, w) {
-    const st = exState(ex);
-    const open = session.open === ex.id;
-    const raw = schemeFor(ex, w);
-    const sch = P.parseScheme(raw);
-    const ref = kgFor(ex, w);
-    const doneSets = st.sets.filter((s) => s.done).length;
-    const schemeHtml = sch.sets
-      ? `${sch.sets} × ${esc(sch.reps)}${sch.plus ? '<span class="plus">+</span>' : ''}`
-      : esc(raw);
-
-    let body = '';
-    if (open) {
-      const lt = lastTime(ex.name);
-      const others = ex.kg.filter((k) => k !== ref);
-      body = `
-        <div class="ex-body">
-          ${ex.note ? `<div class="note">💡 ${esc(ex.note)}</div>` : ''}
-          ${sch.plus ? `<div class="plus-hint">➕ Ultima serie: fai più ripetizioni che puoi e annota quante.</div>` : ''}
-          <div class="facts">
-            ${ref ? `<div class="fact"><span>${esc(ref.label || 'Carico')}</span><b>${esc(ref.text)}</b></div>` : ''}
-            ${others.map((k) => `<div class="fact"><span>${esc(k.label)}</span><b class="muted">${esc(k.text)}</b></div>`).join('')}
-            ${ex.rest ? `<div class="fact"><span>Recupero</span><b>${esc(ex.rest)}</b></div>` : ''}
-          </div>
-          ${lt ? `<div class="last">🕘 Ultima volta (${fmtDate(lt.h.date)}, sett. ${lt.h.week}): ${lt.e.sets.map((s) => `${fmtNum(s.kg) || '–'}kg×${s.reps || '–'}`).join(' · ')}</div>` : ''}
-          <div class="sets">
-            ${st.sets.map((s, i) => `
-              <div class="set ${s.done ? 'done' : ''} ${sch.plus && i === st.sets.length - 1 ? 'amrap' : ''}" data-i="${i}">
-                <div class="set-n">${i + 1}${sch.plus && i === st.sets.length - 1 ? '+' : ''}</div>
-                <label><input type="text" inputmode="decimal" data-f="kg" data-id="${ex.id}" data-i="${i}" value="${esc(fmtNum(s.kg))}" aria-label="Kg serie ${i + 1}"><small>kg</small></label>
-                <label><input type="text" inputmode="numeric" data-f="reps" data-id="${ex.id}" data-i="${i}" value="${esc(s.reps)}" placeholder="${esc(sch.reps.split(/[\/\-–]/)[0] || '')}" aria-label="Ripetizioni serie ${i + 1}"><small>rip</small></label>
-                <button class="set-ok" data-act="set" data-id="${ex.id}" data-i="${i}" aria-label="Serie ${i + 1} fatta">✓</button>
-              </div>`).join('')}
-          </div>
-          <div class="row ex-actions">
-            ${ex.restSec ? `<button class="btn btn-small" data-act="rest" data-s="${ex.restSec}">⏱ Recupero ${ex.restSec}s</button>` : ''}
-            <button class="btn btn-small" data-act="exdone" data-id="${ex.id}">${st.done ? 'Riapri' : 'Esercizio fatto'}</button>
-          </div>
-          ${renderHow(ex.name)}
-        </div>`;
-    }
-
-    return `
-      <article class="ex ${open ? 'open' : ''} ${st.done ? 'done' : ''}" id="ex-${ex.id}">
-        <button class="ex-head" data-act="toggle" data-id="${ex.id}">
-          <div class="ex-name">${esc(ex.name)} ${st.done ? '<span class="ex-done-badge">✓ fatto</span>' : ''}</div>
-          <div class="ex-line">
-            <span class="ex-scheme">${schemeHtml}</span>
-            ${ref ? `<span class="ex-kg">${esc(ref.text)}</span>` : ''}
-          </div>
-          ${sch.extra && sch.sets ? `<div class="ex-extra">${esc(sch.extra)}</div>` : ''}
-          <div class="dots">${st.sets.map((s) => `<i class="${s.done ? 'on' : ''}"></i>`).join('')}</div>
-        </button>
-        ${body}
-      </article>`;
+  function showExercise(i) {
+    const day = scheda.days[session.day];
+    if (i < 0 || i >= day.exercises.length) return;
+    session.open = day.exercises[i].id;
+    saveSession();
+    renderWorkout();
+    window.scrollTo(0, 0);
   }
 
   /* ---------- "come si fa": video e foto ---------- */
@@ -432,7 +393,7 @@
               <div class="hist-ex">
                 <b>${esc(e.name)}</b>
                 <span class="muted small">${esc(e.scheme)}</span>
-                <div>${e.sets.length ? e.sets.map((s) => `${fmtNum(s.kg) || '–'}kg × ${s.reps || '–'}`).join(' · ') : '<span class="muted">segnato come fatto</span>'}</div>
+                <div>${e.sets.length ? e.sets.map((s) => `${fmtNum(s.kg) || '–'}kg × ${s.reps || '–'}`).join(' · ') : `<span class="muted">✓ ${esc(e.kg || 'fatto')}</span>`}</div>
               </div>`).join('')}
           </div>
         </details>`).join('') : '<p class="muted">Nessun allenamento concluso ancora.</p>'}`;
@@ -492,13 +453,11 @@
       day: session.day,
       dayTitle: day.title,
       exercises: day.exercises
-        .filter((e) => exState(e).done || exState(e).sets.some((s) => s.done))
-        .map((e) => ({
-          name: e.name,
-          group: e.group,
-          scheme: schemeFor(e, session.week),
-          sets: exState(e).sets.filter((s) => s.done).map((s) => ({ kg: s.kg, reps: s.reps })),
-        })),
+        .filter((e) => exState(e).done)
+        .map((e) => {
+          const ref = kgFor(e, session.week);
+          return { name: e.name, group: e.group, scheme: schemeFor(e, session.week), kg: ref ? ref.text : '', sets: [] };
+        }),
     });
     store.set('history', history);
 
@@ -518,64 +477,6 @@
     render();
     window.scrollTo(0, 0);
     toast(msg);
-  }
-
-  function toggleSet(id, i) {
-    const day = scheda.days[session.day];
-    const ex = day.exercises.find((e) => e.id === id);
-    const st = exState(ex);
-    const s = st.sets[i];
-    const sch = P.parseScheme(schemeFor(ex, session.week));
-    const isLast = i === st.sets.length - 1;
-    if (!s.done) {
-      if (!s.reps) {
-        if (sch.plus && isLast) {
-          const inp = app.querySelector(`input[data-f="reps"][data-id="${id}"][data-i="${i}"]`);
-          if (inp) inp.focus();
-          toast('Scrivi quante ripetizioni hai fatto');
-          return;
-        }
-        s.reps = sch.reps.split(/[\/\-–]/)[0] || '';
-      }
-      s.done = true;
-      ensureAudio();
-      const allDone = st.sets.every((x) => x.done);
-      if (allDone) {
-        st.done = true;
-        const next = day.exercises.find((e) => !exState(e).done);
-        session.open = next ? next.id : null;
-      }
-      if (ex.restSec) startTimer(ex.restSec, allDone ? 'Recupero · prossimo esercizio' : `Recupero · serie ${i + 2} di ${st.sets.length}`);
-      saveSession();
-      renderWorkout();
-      if (allDone && session.open) scrollToEx(session.open);
-    } else {
-      s.done = false;
-      st.done = false;
-      saveSession();
-      renderWorkout();
-    }
-  }
-
-  function scrollToEx(id) {
-    requestAnimationFrame(() => {
-      const el = document.getElementById('ex-' + id);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  }
-
-  function toggleGroup(g) {
-    const day = scheda.days[session.day];
-    const exs = day.exercises.filter((e) => e.group === g);
-    const allDone = exs.every((e) => exState(e).done);
-    exs.forEach((e) => { exState(e).done = !allDone; });
-    if (!allDone) {
-      const next = day.exercises.find((e) => !exState(e).done);
-      session.open = next ? next.id : null;
-    }
-    saveSession();
-    renderWorkout();
-    if (!allDone && session.open) scrollToEx(session.open);
   }
 
   /* ---------- import ---------- */
@@ -717,25 +618,25 @@
           session = null; store.del('session'); stopTimer(); render();
         }
         break;
-      case 'toggle':
-        session.open = session.open === el.dataset.id ? null : el.dataset.id;
-        saveSession();
-        renderWorkout();
-        if (session.open) scrollToEx(session.open);
+      case 'prev': case 'next': {
+        const day = scheda.days[session.day];
+        showExercise(currentIndex(day) + (a === 'next' ? 1 : -1));
         break;
-      case 'set': toggleSet(el.dataset.id, +el.dataset.i); break;
-      case 'group': toggleGroup(el.dataset.g); break;
+      }
+      case 'jump': showExercise(+el.dataset.i); break;
       case 'exdone': {
-        const ex = scheda.days[session.day].exercises.find((e) => e.id === el.dataset.id);
-        const st = exState(ex);
+        const exs = scheda.days[session.day].exercises;
+        const i = exs.findIndex((e) => e.id === el.dataset.id);
+        const st = exState(exs[i]);
         st.done = !st.done;
         if (st.done) {
-          const next = scheda.days[session.day].exercises.find((e) => !exState(e).done);
-          session.open = next ? next.id : null;
+          // passa al prossimo esercizio non ancora fatto (prima quelli successivi)
+          const order = exs.slice(i + 1).concat(exs.slice(0, i));
+          const next = order.find((e) => !exState(e).done);
+          if (next) return showExercise(exs.indexOf(next));
         }
         saveSession();
         renderWorkout();
-        if (st.done && session.open) scrollToEx(session.open);
         break;
       }
       case 'rest': ensureAudio(); startTimer(+el.dataset.s, 'Recupero'); break;
@@ -777,31 +678,19 @@
     }
   });
 
-  // input kg / ripetizioni: salva senza ridisegnare (per non perdere il focus)
-  app.addEventListener('input', (ev) => {
-    const inp = ev.target;
-    if (!inp.dataset || !inp.dataset.f || !session) return;
-    const ex = scheda.days[session.day].exercises.find((e) => e.id === inp.dataset.id);
-    if (!ex) return;
-    const st = exState(ex);
-    const i = +inp.dataset.i;
-    const raw = inp.value.replace(',', '.').trim();
-    if (inp.dataset.f === 'kg') {
-      const old = st.sets[i].kg;
-      st.sets[i].kg = raw;
-      // propaga il nuovo peso alle serie successive non ancora fatte
-      for (let j = i + 1; j < st.sets.length; j++) {
-        const s = st.sets[j];
-        if (!s.done && String(s.kg) === String(old)) {
-          s.kg = raw;
-          const other = app.querySelector(`input[data-f="kg"][data-id="${ex.id}"][data-i="${j}"]`);
-          if (other) other.value = fmtNum(raw);
-        }
-      }
-    } else {
-      st.sets[i].reps = raw;
-    }
-    saveSession();
+  // scorrimento orizzontale col dito per cambiare esercizio
+  let touch = null;
+  app.addEventListener('touchstart', (ev) => {
+    if (view.name !== 'workout' || ev.touches.length !== 1) return;
+    touch = { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+  }, { passive: true });
+  app.addEventListener('touchend', (ev) => {
+    if (!touch || view.name !== 'workout' || !session) return;
+    const dx = ev.changedTouches[0].clientX - touch.x;
+    const dy = ev.changedTouches[0].clientY - touch.y;
+    touch = null;
+    if (Math.abs(dx) < 70 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    showExercise(currentIndex(scheda.days[session.day]) + (dx < 0 ? 1 : -1));
   });
 
   /* ================= timer di recupero ================= */
@@ -818,19 +707,43 @@
       if (audio.state === 'suspended') audio.resume();
     } catch (e) { audio = null; }
   }
-  function beep(freq, dur, when) {
+  function beep(freq, dur, when, loud) {
     if (!audio) return;
     const t = audio.currentTime + (when || 0);
     const o = audio.createOscillator();
     const g = audio.createGain();
     o.frequency.value = freq;
-    o.type = 'sine';
+    o.type = loud ? 'square' : 'sine'; // l'onda quadra si sente molto di più
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.5, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(1, t + 0.01);
+    g.gain.setValueAtTime(1, t + dur - 0.03);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(audio.destination);
+    o.connect(g).connect(audioOut());
     o.start(t);
     o.stop(t + dur + 0.05);
+  }
+  // compressore: alza il volume percepito senza distorcere
+  let out = null;
+  function audioOut() {
+    if (!out) {
+      out = audio.createDynamicsCompressor();
+      out.threshold.value = -30;
+      out.knee.value = 0;
+      out.ratio.value = 12;
+      const gain = audio.createGain();
+      gain.gain.value = 2.5;
+      out.connect(gain).connect(audio.destination);
+    }
+    return out;
+  }
+  function alarm() {
+    // 3 raffiche di bip acuti (circa 2 secondi)
+    for (let r = 0; r < 3; r++) {
+      const base = r * 0.7;
+      beep(2093, 0.14, base, true);
+      beep(2637, 0.14, base + 0.18, true);
+      beep(2093, 0.14, base + 0.36, true);
+    }
   }
 
   function startTimer(sec, label) {
@@ -859,15 +772,15 @@
     tBar.style.width = `${Math.min(100, Math.max(0, 100 - (ms / (timer.total * 1000)) * 100))}%`;
     if (left > 0 && left <= 3 && timer.lastBeep !== left) {
       timer.lastBeep = left;
-      beep(660, 0.12);
+      beep(1568, 0.12, 0, true);
     }
     if (ms <= 0 && !timer.fired) {
       timer.fired = true;
       clearInterval(timer.iv);
       tTime.textContent = 'Via! 💪';
       tEl.classList.add('ended');
-      beep(990, 0.25); beep(990, 0.25, 0.3); beep(1320, 0.5, 0.6);
-      if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 700]);
+      alarm();
+      if (navigator.vibrate) navigator.vibrate([500, 150, 500, 150, 900]);
       timer.hideT = setTimeout(stopTimer, 6000);
     }
   }
