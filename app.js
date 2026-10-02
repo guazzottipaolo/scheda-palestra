@@ -320,20 +320,15 @@
   }
 
   /* ---------- "come si fa": video e foto ---------- */
-  function renderHow(name, titled) {
+  function renderHow(name) {
     const k = keyOf(name);
-    const link = links[k];
     const yt = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name.toLowerCase() + ' esecuzione corretta');
     return `
       <div class="how">
-        <h3>Come si fa${titled ? ' · ' + esc(name) : ''}</h3>
+        <h3>Come si fa</h3>
         <div class="media" data-media="${esc(k)}"></div>
         <div class="row">
-          ${link ? `<a class="btn btn-small btn-primary" href="${esc(link)}" target="_blank" rel="noopener">▶ Il tuo video</a>` : ''}
-          <a class="btn btn-small" href="${esc(yt)}" target="_blank" rel="noopener">🔎 Cerca su YouTube</a>
-        </div>
-        <div class="row" style="margin-top:8px">
-          <button class="btn btn-small" data-act="link" data-k="${esc(k)}">🔗 ${link ? 'Cambia link' : 'Link video'}</button>
+          <a class="btn btn-small" href="${esc(yt)}" target="_blank" rel="noopener">▶ YouTube</a>
           <button class="btn btn-small" data-act="media" data-k="${esc(k)}">📷 Foto/video</button>
         </div>
       </div>`;
@@ -657,17 +652,6 @@
         const it = scheda.extras[view.i].items[+el.dataset.i];
         ensureAudio();
         startTimer(it.durationSec, it.name);
-        break;
-      }
-      case 'link': {
-        const k = el.dataset.k;
-        const v = prompt('Incolla il link del video (YouTube, Instagram...). Lascia vuoto per rimuoverlo.', links[k] || '');
-        if (v == null) break;
-        const url = v.trim();
-        if (url && !/^https?:\/\//i.test(url)) { alert('Il link deve iniziare con http:// o https://'); break; }
-        if (url) links[k] = url; else delete links[k];
-        store.set('links', links);
-        render();
         break;
       }
       case 'media': mediaKey = el.dataset.k; fileMedia.click(); break;
