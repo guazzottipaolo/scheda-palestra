@@ -126,9 +126,10 @@
         <p class="muted">Carica il file della scheda che ti ha condiviso il trainer.</p>
         <ol class="steps">
           <li>Tocca <b>Carica scheda</b></li>
-          <li>Nel selettore scegli <b>Drive</b> (dal menu ☰) oppure la cartella Download</li>
-          <li>Seleziona il file della scheda (.xlsx)</li>
+          <li>Nel selettore scegli <b>Drive</b> (dal menu ☰) oppure la cartella <b>Download</b></li>
+          <li>Seleziona il file della scheda</li>
         </ol>
+        <p class="small muted" style="text-align:left">Se non si apre: nell'app <b>Drive</b> tocca ⋮ accanto alla scheda → <b>Scarica</b>, poi qui scegli il file dalla cartella <b>Download</b>.</p>
         <button class="btn btn-primary btn-block" data-act="import">Carica scheda</button>
         <p class="small muted" style="margin-top:22px">Hai un backup? <a href="#" data-act="restore">Ripristina dati</a></p>
       </div>`;
@@ -579,12 +580,21 @@
 
   /* ---------- import ---------- */
   async function importFile(file) {
+    const HELP = '\n\nProva così: apri l\'app Drive, tocca ⋮ accanto alla scheda → "Scarica", poi qui scegli il file dalla cartella Download.';
     try {
       const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array', cellNF: true });
+      if (!buf.byteLength) {
+        alert('Il file selezionato è vuoto: probabilmente è un Foglio Google che il telefono non riesce a convertire.' + HELP);
+        return;
+      }
+      let wb;
+      try { wb = XLSX.read(buf, { type: 'array', cellNF: true }); } catch (e) {
+        alert(`"${file.name}" non sembra un foglio di calcolo leggibile.` + HELP);
+        return;
+      }
       const list = P.parseWorkbook(wb, XLSX);
       if (!list.length) {
-        alert('Non riesco a leggere questa scheda: non trovo righe tipo "GIORNO 1" con le colonne "SETTIMANA 1, 2...".');
+        alert(`Non riesco a leggere la scheda in "${file.name}": non trovo righe tipo "GIORNO 1" con le colonne "SETTIMANA 1, 2...".` + HELP);
         return;
       }
       list.forEach((s) => { s.fileName = file.name; s.importedAt = new Date().toISOString(); });
