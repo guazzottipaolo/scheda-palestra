@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '9';
+  const APP_VERSION = '10';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -84,41 +84,6 @@
     return i;
   }
 
-  /* ================= tabella esercizi (disegni) ================= */
-  const normName = (t) => String(t || '').toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .replace(/[^A-Z0-9]+/g, ' ').trim();
-  let drawIndex = null; // chiave normalizzata -> voce della tabella
-  let drawKeys = [];
-  fetch('esercizi/esercizi.json').then((r) => r.json()).then((t) => {
-    drawIndex = {};
-    t.esercizi.forEach((e) => [e.nome, ...(e.alias || [])].forEach((n) => { drawIndex[normName(n)] = e; }));
-    drawKeys = Object.keys(drawIndex).sort((a, b) => b.length - a.length);
-    if (scheda && view.name !== 'home') render();
-  }).catch(() => { drawIndex = {}; });
-
-  /* Cerca l'esercizio nella tabella: prima il nome esatto, poi il nome più lungo contenuto nel nome della scheda. */
-  function findDrawing(name) {
-    if (!drawIndex) return null;
-    const k = normName(name);
-    if (drawIndex[k]) return { e: drawIndex[k], exact: true };
-    const padded = ` ${k} `;
-    const key = drawKeys.find((x) => padded.includes(` ${x} `));
-    return key ? { e: drawIndex[key], exact: false } : null;
-  }
-
-  function drawingHtml(name, small) {
-    const f = findDrawing(name);
-    if (!f || !f.e.foto) return '';
-    const src = (i) => `esercizi/img/${encodeURIComponent(f.e.foto)}-${i}.jpg`;
-    const approx = f.e.verificare || !f.exact;
-    return `
-      <div class="draw ${small ? 'small' : ''}" ${small ? '' : 'data-act="draw-zoom"'}>
-        <figure><img src="${src(1)}" alt="Posizione iniziale" loading="lazy"><figcaption>Inizio</figcaption></figure>
-        <figure><img src="${src(2)}" alt="Posizione finale" loading="lazy"><figcaption>Fine</figcaption></figure>
-      </div>
-      ${approx && !small ? '<div class="small muted">Foto indicativa: la scheda può indicare una variante.</div>' : ''}`;
-  }
-
   /* ================= navigazione ================= */
   function go(name, params) {
     view = Object.assign({ name }, params || {});
@@ -143,7 +108,6 @@
       case 'extra': return renderExtra();
       case 'history': return renderHistory();
       case 'info': return renderInfo();
-      case 'library': return renderLibrary();
       default: return renderHome();
     }
   }
@@ -249,22 +213,9 @@
           </button>`).join('')}
       </div>
 
-      ${scheda.extras.length ? `
-        <div class="section-title">Extra</div>
-        <div class="day-list">
-          ${scheda.extras.map((x, i) => `
-            <button class="day-item" data-act="go" data-view="extra" data-i="${i}">
-              <span style="font-size:1.4rem">🔥</span>
-              <div class="grow"><div class="title">${esc(x.title)}</div>
-              <div class="muted small">${x.items.map((it) => esc(it.name)).join(' · ')}</div></div>
-              <span class="muted">›</span>
-            </button>`).join('')}
-        </div>` : ''}
-
       <div class="section-title">Altro</div>
       <div class="row">
         <button class="btn" data-act="go" data-view="history">📈 Storico</button>
-        <button class="btn" data-act="go" data-view="library">📚 Esercizi</button>
         <button class="btn" data-act="import">📄 Carica scheda</button>
       </div>`;
   }
@@ -364,7 +315,6 @@
     return `
       <div class="how">
         <h3>Come si fa</h3>
-        ${drawingHtml(name)}
         <div class="media" data-media="${esc(k)}"></div>
         <div class="row">
           <a class="btn btn-small" href="${esc(yt)}" target="_blank" rel="noopener">▶ YouTube</a>
@@ -435,30 +385,6 @@
               </div>`).join('')}
           </div>
         </details>`).join('') : '<p class="muted">Nessun allenamento concluso ancora.</p>'}`;
-  }
-
-  /* ---------- tabella esercizi della scheda ---------- */
-  function renderLibrary() {
-    const row = (name, sub) => {
-      const d = drawingHtml(name, true);
-      return `
-        <div class="lib-row">
-          <div class="lib-name"><b>${esc(name)}</b>${sub ? `<div class="muted small">${esc(sub)}</div>` : ''}</div>
-          ${d || '<div class="lib-none muted small">nessuna foto</div>'}
-        </div>`;
-    };
-    app.innerHTML = `
-      <header class="top">
-        <button class="icon-btn" data-act="back" aria-label="Indietro">‹</button>
-        <h1>Esercizi</h1>
-      </header>
-      ${scheda.days.map((d) => `
-        <div class="section-title">${esc(d.title)}</div>
-        <div class="card lib">${d.exercises.map((e) => row(e.name, e.group)).join('')}</div>`).join('')}
-      ${scheda.extras.map((x) => `
-        <div class="section-title">${esc(x.title)}</div>
-        <div class="card lib">${x.items.map((it) => row(it.name)).join('')}</div>`).join('')}
-      <p class="small muted">Foto: <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noopener">Free Exercise DB</a> (pubblico dominio).</p>`;
   }
 
   /* ---------- info e gestione dati ---------- */
@@ -719,7 +645,6 @@
         startTimer(it.durationSec, it.name, 'cardio');
         break;
       }
-      case 'draw-zoom': el.classList.toggle('zoom'); break;
       case 'media': mediaKey = el.dataset.k; fileMedia.click(); break;
       case 'media-del':
         if (confirm('Rimuovere la foto/video di questo esercizio?')) {
