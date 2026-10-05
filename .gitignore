@@ -3,3 +3,6 @@
 *.xls
 *.csv
 backup-*.json
+
+# Documenti personali (proposte, PDF)
+*.pdf
