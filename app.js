@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '12';
+  const APP_VERSION = '13';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -689,7 +689,7 @@
         const sets = setsOf(ex);
         const j = sets.indexOf(false);
         if (j < 0) { startTimer(+el.dataset.s, 'Recupero'); break; }
-        startTimer(+el.dataset.s, j === sets.length - 1 ? 'Recupero · prossimo esercizio' : `Recupero · fatta serie ${j + 1} di ${sets.length}`);
+        startTimer(+el.dataset.s, j === sets.length - 1 ? 'Recupero finale' : `Recupero · serie ${j + 1}/${sets.length}`);
         setSerie(ex.id, j, true);
         break;
       }
