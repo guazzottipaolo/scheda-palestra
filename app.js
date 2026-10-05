@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '10';
+  const APP_VERSION = '11';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -226,6 +226,43 @@
     return session.ex[ex.id];
   }
 
+  /* serie spuntate dell'esercizio: array di true/false lungo quanto le serie della settimana */
+  function setsOf(ex) {
+    const st = exState(ex);
+    const n = Math.max(1, P.parseScheme(schemeFor(ex, session.week)).sets || 1);
+    let sets = Array.isArray(st.sets) ? st.sets.map((x) => (x && typeof x === 'object' ? !!x.done : !!x)) : [];
+    if (st.done && !sets.some(Boolean)) sets = [];
+    sets = Array.from({ length: n }, (_, j) => (st.done && !sets.length) || !!sets[j]);
+    st.sets = sets;
+    return sets;
+  }
+
+  /* passa al prossimo esercizio non ancora fatto (prima quelli successivi) */
+  function goNextUndone(i) {
+    const exs = scheda.days[session.day].exercises;
+    const order = exs.slice(i + 1).concat(exs.slice(0, i));
+    const next = order.find((e) => !exState(e).done);
+    if (next) { showExercise(exs.indexOf(next)); return true; }
+    return false;
+  }
+
+  /* spunta (on=true) o toglie una serie; se sono tutte fatte l'esercizio è finito e si passa al successivo */
+  function setSerie(id, j, on) {
+    const exs = scheda.days[session.day].exercises;
+    const i = exs.findIndex((e) => e.id === id);
+    const ex = exs[i];
+    const st = exState(ex);
+    const sets = setsOf(ex);
+    sets[j] = on;
+    const all = sets.every(Boolean);
+    st.done = all;
+    saveSession();
+    renderWorkout();
+    if (all) setTimeout(() => {
+      if (view.name === 'workout' && session && session.open === id && !goNextUndone(i)) renderWorkout();
+    }, 700);
+  }
+
   function currentIndex(day) {
     let i = day.exercises.findIndex((e) => e.id === session.open);
     if (i < 0) {
@@ -270,6 +307,9 @@
         <div class="ex-scheme">${schemeHtml}</div>
         ${ref ? `<div class="ex-kg">${esc(ref.text)}</div>` : ''}
         ${sch.extra && sch.sets ? `<div class="ex-extra">${esc(sch.extra)}</div>` : ''}
+        <div class="sets-check" role="group" aria-label="Serie fatte">
+          ${setsOf(ex).map((on, j) => `<button class="setc ${on ? 'on' : ''}" data-act="setc" data-id="${ex.id}" data-j="${j}" aria-pressed="${on}" aria-label="Serie ${j + 1}">${on ? '✓' : j + 1}${sch.plus && j === setsOf(ex).length - 1 && !on ? '+' : ''}</button>`).join('')}
+        </div>
         ${ex.note ? `<div class="note">💡 ${esc(ex.note)}</div>` : ''}
         ${sch.plus ? `
           <label class="amrap">
@@ -277,7 +317,7 @@
             <input type="number" inputmode="numeric" min="0" data-amrap="${ex.id}" value="${esc(st.reps || '')}" placeholder="${esc(sch.reps.split(/[\/\-–]/)[0])}" aria-label="Ripetizioni ultima serie">
           </label>` : ''}
         <div class="big-actions">
-          ${ex.restSec ? `<button class="btn big" data-act="rest" data-s="${ex.restSec}">⏱ Recupero<small>${ex.restSec} sec</small></button>` : ''}
+          ${ex.restSec ? `<button class="btn big" data-act="rest" data-id="${ex.id}" data-s="${ex.restSec}">⏱ Recupero<small>${ex.restSec} sec</small></button>` : ''}
           <button class="btn big ${st.done ? 'is-done' : 'btn-primary'}" data-act="exdone" data-id="${ex.id}">${st.done ? '✓ Fatto<small>tocca per annullare</small>' : '✓ Esercizio fatto'}</button>
         </div>
         ${isLast || nDone === total ? `
@@ -627,17 +667,23 @@
         const i = exs.findIndex((e) => e.id === el.dataset.id);
         const st = exState(exs[i]);
         st.done = !st.done;
-        if (st.done) {
-          // passa al prossimo esercizio non ancora fatto (prima quelli successivi)
-          const order = exs.slice(i + 1).concat(exs.slice(0, i));
-          const next = order.find((e) => !exState(e).done);
-          if (next) return showExercise(exs.indexOf(next));
-        }
+        st.sets = setsOf(exs[i]).map(() => st.done);
+        if (st.done && goNextUndone(i)) break;
         saveSession();
         renderWorkout();
         break;
       }
-      case 'rest': ensureAudio(); startTimer(+el.dataset.s, 'Recupero'); break;
+      case 'rest': {
+        ensureAudio();
+        const ex = scheda.days[session.day].exercises.find((e) => e.id === el.dataset.id);
+        const sets = setsOf(ex);
+        const j = sets.indexOf(false);
+        if (j < 0) { startTimer(+el.dataset.s, 'Recupero'); break; }
+        startTimer(+el.dataset.s, j === sets.length - 1 ? 'Recupero · prossimo esercizio' : `Recupero · fatta serie ${j + 1} di ${sets.length}`);
+        setSerie(ex.id, j, true);
+        break;
+      }
+      case 'setc': setSerie(el.dataset.id, +el.dataset.j, !setsOf(scheda.days[session.day].exercises.find((e) => e.id === el.dataset.id))[+el.dataset.j]); break;
       case 'finish': finishDay(); break;
       case 'extra-timer': {
         const it = scheda.extras[view.i].items[+el.dataset.i];

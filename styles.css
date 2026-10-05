@@ -151,6 +151,12 @@ a { color: var(--accent); }
 }
 .amrap input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .day-end { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+.sets-check { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+.setc {
+  width: 56px; height: 56px; border-radius: 14px; border: 2px solid var(--line);
+  background: var(--surface-2); font-size: 1.3rem; font-weight: 800; color: var(--muted);
+}
+.setc.on { background: var(--ok); border-color: var(--ok); color: #fff; }
 .plus-hint { color: var(--accent); font-weight: 600; margin: 8px 0; }
 .ex-one .note { font-size: 1.05rem; }
 
