@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '11';
+  const APP_VERSION = '12';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -237,15 +237,6 @@
     return sets;
   }
 
-  /* passa al prossimo esercizio non ancora fatto (prima quelli successivi) */
-  function goNextUndone(i) {
-    const exs = scheda.days[session.day].exercises;
-    const order = exs.slice(i + 1).concat(exs.slice(0, i));
-    const next = order.find((e) => !exState(e).done);
-    if (next) { showExercise(exs.indexOf(next)); return true; }
-    return false;
-  }
-
   /* spunta (on=true) o toglie una serie; se sono tutte fatte l'esercizio è finito e si passa al successivo */
   function setSerie(id, j, on) {
     const exs = scheda.days[session.day].exercises;
@@ -258,10 +249,29 @@
     st.done = all;
     saveSession();
     renderWorkout();
-    if (all) setTimeout(() => {
-      if (view.name === 'workout' && session && session.open === id && !goNextUndone(i)) renderWorkout();
-    }, 700);
+    if (all) celebrate(i, id);
   }
+
+  /* messaggio "Ben fatto!" per un paio di secondi, poi esercizio successivo (toccando si salta l'attesa) */
+  const cheerEl = document.getElementById('cheer');
+  let cheerT = null;
+  let cheerGo = null;
+  function celebrate(i, id) {
+    const exs = scheda.days[session.day].exercises;
+    const next = exs.slice(i + 1).concat(exs.slice(0, i)).find((e) => !exState(e).done);
+    cheerEl.querySelector('.cheer-sub').textContent = next
+      ? `Passiamo all'esercizio successivo: ${next.name}`
+      : 'Hai completato tutti gli esercizi del giorno!';
+    cheerEl.hidden = false;
+    clearTimeout(cheerT);
+    cheerGo = () => {
+      cheerEl.hidden = true;
+      cheerGo = null;
+      if (view.name === 'workout' && session && session.open === id && next) showExercise(exs.indexOf(next));
+    };
+    cheerT = setTimeout(() => cheerGo && cheerGo(), 2200);
+  }
+  cheerEl.addEventListener('click', () => { clearTimeout(cheerT); if (cheerGo) cheerGo(); });
 
   function currentIndex(day) {
     let i = day.exercises.findIndex((e) => e.id === session.open);
@@ -668,9 +678,9 @@
         const st = exState(exs[i]);
         st.done = !st.done;
         st.sets = setsOf(exs[i]).map(() => st.done);
-        if (st.done && goNextUndone(i)) break;
         saveSession();
         renderWorkout();
+        if (st.done) celebrate(i, exs[i].id);
         break;
       }
       case 'rest': {
