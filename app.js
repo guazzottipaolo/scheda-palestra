@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '14';
+  const APP_VERSION = '15';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -203,14 +203,18 @@
       <div class="section-title">Giorni · settimana ${w}</div>
       <div class="day-list">
         ${scheda.days.map((d, i) => `
-          <button class="day-item" data-act="start" data-day="${i}">
-            <span class="check ${doneW.includes(i) ? 'on' : ''}">✓</span>
-            <div class="grow">
-              <div class="title">${esc(d.title)}</div>
-              <div class="muted small">${groupsOf(d).map(esc).join(' · ')}</div>
-            </div>
-            <span class="muted">›</span>
-          </button>`).join('')}
+          <div class="day-item day-row">
+            <button class="day-check" data-act="daydone" data-day="${i}" aria-label="${doneW.includes(i) ? 'Togli spunta' : 'Segna come fatto'} ${esc(d.title)}">
+              <span class="check ${doneW.includes(i) ? 'on' : ''}">✓</span>
+            </button>
+            <button class="day-main" data-act="start" data-day="${i}">
+              <div class="grow">
+                <div class="title">${esc(d.title)}</div>
+                <div class="muted small">${groupsOf(d).map(esc).join(' · ')}</div>
+              </div>
+              <span class="muted">›</span>
+            </button>
+          </div>`).join('')}
       </div>
 
       <div class="section-title">Altro</div>
@@ -470,22 +474,46 @@
       <button class="btn btn-block btn-danger" data-act="reset">Cancella tutti i dati</button>`;
   }
 
+  /* ================= finestra di conferma (al posto di confirm/alert del browser) ================= */
+  const dlg = document.getElementById('dialog');
+  function ask(msg, opts) {
+    const o = Object.assign({ ok: 'OK', cancel: 'Annulla', danger: false }, opts);
+    dlg.querySelector('.dialog-msg').textContent = msg;
+    const okBtn = dlg.querySelector('[data-d="ok"]');
+    const cancelBtn = dlg.querySelector('[data-d="cancel"]');
+    okBtn.textContent = o.ok;
+    okBtn.className = 'btn ' + (o.danger ? 'btn-danger-fill' : 'btn-primary');
+    cancelBtn.textContent = o.cancel || '';
+    cancelBtn.hidden = o.cancel == null;
+    dlg.hidden = false;
+    return new Promise((resolve) => {
+      dlg.onclick = (ev) => {
+        const b = ev.target.closest('[data-d]');
+        if (!b && ev.target !== dlg) return; // tocco dentro il riquadro ma non sui pulsanti
+        dlg.hidden = true;
+        dlg.onclick = null;
+        resolve(!!b && b.dataset.d === 'ok');
+      };
+    });
+  }
+  const info = (msg) => ask(msg, { cancel: null });
+
   /* ================= azioni ================= */
-  function startDay(i) {
+  async function startDay(i) {
     const p = prog();
     if (session && session.scheda === scheda.title) {
       if (session.day === i) return go('workout');
-      if (!confirm(`C'è un allenamento in corso (${scheda.days[session.day].title}). Lo abbandoni e inizi ${scheda.days[i].title}?`)) return;
+      if (!(await ask(`C'è un allenamento in corso (${scheda.days[session.day].title}).\nLo abbandoni e inizi ${scheda.days[i].title}?`, { ok: 'Sì, inizia', danger: true }))) return;
     }
     session = { scheda: scheda.title, day: i, week: p.week, started: Date.now(), ex: {}, open: null };
     saveSession();
     go('workout');
   }
 
-  function finishDay() {
+  async function finishDay() {
     const day = scheda.days[session.day];
     const missing = day.exercises.filter((e) => !exState(e).done).length;
-    if (missing && !confirm(`${missing} esercizi non sono segnati come fatti. Concludere comunque?`)) return;
+    if (missing && !(await ask(`${missing === 1 ? '1 esercizio non è segnato come fatto' : missing + ' esercizi non sono segnati come fatti'}.\nConcludere comunque?`, { ok: 'Concludi' }))) return;
     history.push({
       date: new Date().toISOString(),
       scheda: scheda.title,
@@ -525,17 +553,17 @@
     try {
       const buf = await file.arrayBuffer();
       if (!buf.byteLength) {
-        alert('Il file selezionato è vuoto: probabilmente è un Foglio Google che il telefono non riesce a convertire.' + HELP);
+        await info('Il file selezionato è vuoto: probabilmente è un Foglio Google che il telefono non riesce a convertire.' + HELP);
         return;
       }
       let wb;
       try { wb = XLSX.read(buf, { type: 'array', cellNF: true }); } catch (e) {
-        alert(`"${file.name}" non sembra un foglio di calcolo leggibile.` + HELP);
+        await info(`"${file.name}" non sembra un foglio di calcolo leggibile.` + HELP);
         return;
       }
       const list = P.parseWorkbook(wb, XLSX);
       if (!list.length) {
-        alert(`Non riesco a leggere la scheda in "${file.name}": non trovo righe tipo "GIORNO 1" con le colonne "SETTIMANA 1, 2...".` + HELP);
+        await info(`Non riesco a leggere la scheda in "${file.name}": non trovo righe tipo "GIORNO 1" con le colonne "SETTIMANA 1, 2...".` + HELP);
         return;
       }
       list.forEach((s) => { s.fileName = file.name; s.importedAt = new Date().toISOString(); });
@@ -547,7 +575,7 @@
       }
     } catch (e) {
       console.error(e);
-      alert('Errore nella lettura del file: ' + e.message);
+      await info('Errore nella lettura del file: ' + e.message);
     }
   }
 
@@ -587,7 +615,7 @@
     try {
       const data = JSON.parse(await file.text());
       if (data.app !== 'scheda-palestra') throw new Error('non è un backup di questa app');
-      if (!confirm('Sostituire i dati attuali con quelli del backup?')) return;
+      if (!(await ask('Sostituire i dati attuali con quelli del backup?', { ok: 'Sostituisci', danger: true }))) return;
       scheda = data.scheda || null;
       history = data.history || [];
       allProgress = data.progress || {};
@@ -602,7 +630,7 @@
       render();
       toast('Backup ripristinato ✓');
     } catch (e) {
-      alert('Backup non valido: ' + e.message);
+      await info('Backup non valido: ' + e.message);
     }
   }
 
@@ -624,7 +652,7 @@
       loadMediaInto();
       toast('Salvato ✓');
     } catch (e) {
-      alert('Impossibile salvare il file: ' + e.message);
+      await info('Impossibile salvare il file: ' + e.message);
     }
   });
 
@@ -662,10 +690,24 @@
       case 'start': startDay(+el.dataset.day); break;
       case 'resume': go('workout'); break;
       case 'abort':
-        if (confirm('Annullare l\'allenamento in corso? Le serie segnate andranno perse.')) {
-          session = null; store.del('session'); stopTimer(); render();
-        }
+        ask('Annullare l\'allenamento in corso?\nLe serie segnate andranno perse.', { ok: 'Annulla allenamento', cancel: 'Continua', danger: true }).then((ok) => {
+          if (ok) { session = null; store.del('session'); stopTimer(); render(); }
+        });
         break;
+      case 'daydone': {
+        const i = +el.dataset.day;
+        const p = prog();
+        const done = p.done[p.week] || [];
+        const on = done.includes(i);
+        ask(on ? `Togliere la spunta da ${scheda.days[i].title} (settimana ${p.week})?` : `Segnare ${scheda.days[i].title} come fatto nella settimana ${p.week}?`,
+          { ok: on ? 'Togli spunta' : 'Segna fatto' }).then((ok) => {
+          if (!ok) return;
+          p.done[p.week] = on ? done.filter((d) => d !== i) : [...done, i];
+          saveProg();
+          render();
+        });
+        break;
+      }
       case 'prev': case 'next': {
         const day = scheda.days[session.day];
         showExercise(currentIndex(day) + (a === 'next' ? 1 : -1));
@@ -703,20 +745,23 @@
       }
       case 'media': mediaKey = el.dataset.k; fileMedia.click(); break;
       case 'media-del':
-        if (confirm('Rimuovere la foto/video di questo esercizio?')) {
+        ask('Rimuovere la foto/video di questo esercizio?', { ok: 'Rimuovi', danger: true }).then((ok) => {
+          if (!ok) return;
           const k = el.dataset.k;
           mediaDB.del(k).then(() => {
             if (mediaUrls[k]) { URL.revokeObjectURL(mediaUrls[k]); delete mediaUrls[k]; }
             loadMediaInto();
           });
-        }
+        });
         break;
       case 'reset':
-        if (confirm('Cancellare scheda, progressi e storico da questo telefono?') && confirm('Sicuro? Non si può annullare.')) {
+        (async () => {
+          if (!(await ask('Cancellare scheda, progressi e storico da questo telefono?', { ok: 'Cancella', danger: true }))) return;
+          if (!(await ask('Sicuro? Non si può annullare.', { ok: 'Sì, cancella tutto', danger: true }))) return;
           Object.keys(localStorage).filter((k) => k.startsWith('gp.')).forEach((k) => localStorage.removeItem(k));
           try { indexedDB.deleteDatabase('scheda-media'); } catch (e) { /* ignora */ }
           location.reload();
-        }
+        })();
         break;
     }
   });

@@ -114,6 +114,12 @@ a { color: var(--accent); }
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 14px 16px;
 }
+.day-row { padding: 0; gap: 0; }
+.day-check { flex: none; background: none; border: 0; padding: 14px 6px 14px 16px; }
+.day-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; text-align: left;
+  background: none; border: 0; padding: 14px 16px 14px 8px;
+}
 .day-item .title { font-weight: 700; font-size: 1.1rem; }
 .day-item .grow { flex: 1; min-width: 0; }
 .check {
@@ -256,3 +262,19 @@ details.hist .body { padding: 0 16px 14px; }
 .cheer-sub { font-size: 1.1rem; font-weight: 600; opacity: .95; }
 @keyframes cheer-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cheer-pop { from { transform: scale(.85); } to { transform: scale(1); } }
+
+/* ---------- finestra di conferma ---------- */
+.dialog {
+  position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 24px;
+  background: rgba(0, 0, 0, .6); animation: cheer-in .15s ease-out;
+}
+.dialog[hidden] { display: none; }
+.dialog-card {
+  width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 20px; padding: 22px 18px 18px; box-shadow: 0 12px 40px rgba(0, 0, 0, .45);
+}
+.dialog-msg { margin: 0 0 18px; font-size: 1.1rem; font-weight: 600; white-space: pre-line; }
+.dialog-btns { display: flex; gap: 10px; }
+.dialog-btns .btn { flex: 1; }
+.dialog-btns .btn[hidden] { display: none; }
+.btn-danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; }
