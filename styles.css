@@ -278,3 +278,16 @@ details.hist .body { padding: 0 16px 14px; }
 .dialog-btns .btn { flex: 1; }
 .dialog-btns .btn[hidden] { display: none; }
 .btn-danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* ---------- progressione a parole ed esercizi a tempo ---------- */
+.week-note { margin-top: 6px; font-size: .88rem; color: var(--muted); }
+.week-tip { margin: -6px 0 14px; font-size: .92rem; }
+.timed { margin: 14px 0 4px; display: grid; gap: 8px; }
+.timed-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  background: var(--surface-2); border-radius: 14px;
+}
+.timed-item .grow { flex: 1; min-width: 0; }
+.timed-item b { font-size: 1.1rem; }
+.timed-text { font-size: 1.3rem; font-weight: 800; color: var(--accent); }
+.sets-check[hidden] { display: none; }

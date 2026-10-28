@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '15';
+  const APP_VERSION = '16';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -65,7 +65,10 @@
 
   /* ================= utilità scheda ================= */
   const weekLabel = (w, day) => (day && day.weekLabels[w]) || scheda.weekLabels[w] || '';
-  const groupsOf = (day) => [...new Set(day.exercises.map((e) => e.group))];
+  const groupsOf = (day) => [...new Set(day.exercises.map((e) => e.group).filter(Boolean))];
+  const daySub = (day) => groupsOf(day).join(' · ') || day.subtitle || '';
+  /* nota di progressione scritta dal trainer per questa settimana ("Settimane 3-4: ...") */
+  const weekNote = (w) => ((scheda.weekNotes || []).find((n) => w >= n.from && w <= n.to) || {}).text || '';
 
   function schemeFor(ex, w) {
     // se la settimana non è indicata, usa l'ultima disponibile precedente
@@ -121,7 +124,7 @@
         <ol class="steps">
           <li>Tocca <b>Carica scheda</b></li>
           <li>Nel selettore scegli <b>Drive</b> (dal menu ☰) oppure la cartella <b>Download</b></li>
-          <li>Seleziona il file della scheda</li>
+          <li>Seleziona il file della scheda: Excel, PDF o Word</li>
         </ol>
         <p class="small muted" style="text-align:left">Se non si apre: nell'app <b>Drive</b> tocca ⋮ accanto alla scheda → <b>Scarica</b>, poi qui scegli il file dalla cartella <b>Download</b>.</p>
         <button class="btn btn-primary btn-block" data-act="import">Carica scheda</button>
@@ -167,7 +170,7 @@
         <div class="card hero">
           <div class="eyebrow">Prossimo allenamento</div>
           <h2>${esc(day.title)}</h2>
-          <div class="chips">${groupsOf(day).map((g) => `<span class="chip">${esc(g)}</span>`).join('')}</div>
+          <div class="chips">${(groupsOf(day).length ? groupsOf(day) : [day.subtitle].filter(Boolean)).map((g) => `<span class="chip">${esc(g)}</span>`).join('')}</div>
           <button class="btn btn-primary btn-block" data-act="start" data-day="${next}">Inizia</button>
         </div>`;
     } else {
@@ -194,6 +197,7 @@
           <div class="eyebrow">Settimana</div>
           <div class="week-num">${w} <span class="muted" style="font-size:1rem;font-weight:500">/ ${scheda.weeks}</span></div>
           <div class="week-label">${esc(label)}</div>
+          ${weekNote(w) ? `<div class="week-note">${esc(weekNote(w))}</div>` : ''}
         </div>
         <button class="icon-btn" data-act="week" data-d="1" aria-label="Settimana successiva" ${w >= scheda.weeks ? 'disabled' : ''}>›</button>
       </div>
@@ -210,7 +214,7 @@
             <button class="day-main" data-act="start" data-day="${i}">
               <div class="grow">
                 <div class="title">${esc(d.title)}</div>
-                <div class="muted small">${groupsOf(d).map(esc).join(' · ')}</div>
+                <div class="muted small">${esc(daySub(d))}</div>
               </div>
               <span class="muted">›</span>
             </button>
@@ -311,17 +315,26 @@
           <h1>${esc(day.title)} <span class="muted" style="font-weight:500;font-size:1rem">${nDone}/${total} fatti</span></h1>
         </div>
       </header>
+      ${weekNote(w) ? `<div class="note week-tip">📈 ${esc(weekNote(w))}</div>` : ''}
       <div class="progress">
         ${day.exercises.map((e, i) => `<button class="seg ${exState(e).done ? 'on' : ''} ${i === idx ? 'cur' : ''}" data-act="jump" data-i="${i}" aria-label="${esc(e.name)}"></button>`).join('')}
       </div>
 
       <article class="ex-one ${st.done ? 'done' : ''}">
-        <div class="eyebrow">${esc(ex.group)} · ${idx + 1} di ${total}</div>
+        <div class="eyebrow">${ex.group ? esc(ex.group) + ' · ' : ''}${idx + 1} di ${total}</div>
         <h2 class="ex-name">${esc(ex.name)}</h2>
-        <div class="ex-scheme">${schemeHtml}</div>
+        ${ex.items ? '' : `<div class="ex-scheme">${schemeHtml}</div>`}
         ${ref ? `<div class="ex-kg">${esc(ref.text)}</div>` : ''}
         ${sch.extra && sch.sets ? `<div class="ex-extra">${esc(sch.extra)}</div>` : ''}
-        <div class="sets-check" role="group" aria-label="Serie fatte">
+        ${ex.items ? `
+          <div class="timed">
+            ${ex.items.map((it, j) => `
+              <div class="timed-item">
+                <div class="grow"><b>${esc(it.name)}</b><div class="timed-text">${esc(it.text)}</div></div>
+                ${it.sec ? `<button class="play" data-act="ex-timer" data-id="${ex.id}" data-j="${j}" aria-label="Avvia timer ${esc(it.name)}">▶</button>` : ''}
+              </div>`).join('')}
+          </div>` : ''}
+        <div class="sets-check" role="group" aria-label="Serie fatte" ${ex.items ? 'hidden' : ''}>
           ${setsOf(ex).map((on, j) => `<button class="setc ${on ? 'on' : ''}" data-act="setc" data-id="${ex.id}" data-j="${j}" aria-pressed="${on}" aria-label="Serie ${j + 1}">${on ? '✓' : j + 1}${sch.plus && j === setsOf(ex).length - 1 && !on ? '+' : ''}</button>`).join('')}
         </div>
         ${ex.note ? `<div class="note">💡 ${esc(ex.note)}</div>` : ''}
@@ -549,22 +562,35 @@
 
   /* ---------- import ---------- */
   async function importFile(file) {
-    const HELP = '\n\nProva così: apri l\'app Drive, tocca ⋮ accanto alla scheda → "Scarica", poi qui scegli il file dalla cartella Download.';
+    const HELP = '\n\nSe è un Foglio Google: aprilo con l\'app Fogli, tocca ⋮ → Condividi ed esporta → Salva come Excel, poi carica qui la copia .xlsx.';
     try {
       const buf = await file.arrayBuffer();
       if (!buf.byteLength) {
         await info('Il file selezionato è vuoto: probabilmente è un Foglio Google che il telefono non riesce a convertire.' + HELP);
         return;
       }
-      let wb;
-      try { wb = XLSX.read(buf, { type: 'array', cellNF: true }); } catch (e) {
-        await info(`"${file.name}" non sembra un foglio di calcolo leggibile.` + HELP);
-        return;
-      }
-      const list = P.parseWorkbook(wb, XLSX);
-      if (!list.length) {
-        await info(`Non riesco a leggere la scheda in "${file.name}": non trovo righe tipo "GIORNO 1" con le colonne "SETTIMANA 1, 2...".` + HELP);
-        return;
+      const kind = window.SchedaImport.fileKind(buf);
+      let list;
+      if (kind === 'pdf' || kind === 'docx') {
+        toast('Leggo la scheda…');
+        const blocks = kind === 'pdf' ? await window.SchedaImport.pdfToBlocks(buf) : await window.SchedaImport.docxToBlocks(buf);
+        const s = P.parseBlocks(blocks);
+        list = s.days.length ? [s] : [];
+        if (!list.length) {
+          await info(`Non riesco a leggere la scheda in "${file.name}": non trovo tabelle con le colonne "Esercizio" e "Serie x Ripetizioni".`);
+          return;
+        }
+      } else {
+        let wb;
+        try { wb = XLSX.read(buf, { type: 'array', cellNF: true }); } catch (e) {
+          await info(`"${file.name}" non sembra una scheda leggibile: l'app legge Excel (.xlsx), PDF e Word (.docx).` + HELP);
+          return;
+        }
+        list = P.parseWorkbook(wb, XLSX);
+        if (!list.length) {
+          await info(`Non riesco a leggere la scheda in "${file.name}": non trovo righe tipo "GIORNO 1" con le colonne "SETTIMANA 1, 2...".` + HELP);
+          return;
+        }
       }
       list.forEach((s) => { s.fileName = file.name; s.importedAt = new Date().toISOString(); });
       if (list.length > 1) {
@@ -737,6 +763,13 @@
       }
       case 'setc': setSerie(el.dataset.id, +el.dataset.j, !setsOf(scheda.days[session.day].exercises.find((e) => e.id === el.dataset.id))[+el.dataset.j]); break;
       case 'finish': finishDay(); break;
+      case 'ex-timer': {
+        const ex = scheda.days[session.day].exercises.find((e) => e.id === el.dataset.id);
+        const it = ex.items[+el.dataset.j];
+        ensureAudio();
+        startTimer(it.sec, it.name, 'cardio');
+        break;
+      }
       case 'extra-timer': {
         const it = scheda.extras[view.i].items[+el.dataset.i];
         ensureAudio();
