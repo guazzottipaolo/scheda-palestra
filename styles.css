@@ -291,3 +291,10 @@ details.hist .body { padding: 0 16px 14px; }
 .timed-item b { font-size: 1.1rem; }
 .timed-text { font-size: 1.3rem; font-weight: 800; color: var(--accent); }
 .sets-check[hidden] { display: none; }
+
+/* ---------- animazioni degli esercizi ---------- */
+.anim { margin: 0 0 12px; border-radius: 16px; overflow: hidden; background: #fff; }
+.anim video { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; }
+.anim figcaption { padding: 6px 10px; font-size: .75rem; color: #5f6875; }
+.anim figcaption a { color: #5f6875; }
+.extra-item + .anim { margin-top: 4px; }

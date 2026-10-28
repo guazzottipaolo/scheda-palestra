@@ -6,3 +6,6 @@ backup-*.json
 
 # Documenti personali (proposte, PDF)
 *.pdf
+
+# Anteprime di librerie con licenza (non ridistribuibili)
+repdb-preview*

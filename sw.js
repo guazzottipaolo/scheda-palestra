@@ -2,7 +2,7 @@
  * Service worker: prima prova la rete (così gli aggiornamenti arrivano subito),
  * se non c'è connessione usa la copia salvata e l'app funziona lo stesso.
  */
-const CACHE = 'scheda-v16';
+const CACHE = 'scheda-v17';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './parser.js', './importers.js',
   './vendor/xlsx.mini.min.js', './vendor/pdf.min.js', './vendor/pdf.worker.min.js', './manifest.webmanifest',

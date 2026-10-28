@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  const APP_VERSION = '16';
+  const APP_VERSION = '17';
   const P = window.SchedaParser;
   const app = document.getElementById('app');
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -376,12 +376,38 @@
   }
 
   /* ---------- "come si fa": video e foto ---------- */
+  /* ---------- animazioni degli esercizi (anteprima RepDB, licenza CC BY-NC 4.0) ---------- */
+  const ANIMS = [
+    { key: 'machine-chest-fly', match: ['PEC FLY', 'PEC DECK', 'PECTORAL', 'BUTTERFLY', 'CHEST FLY'] },
+    { key: 'reverse-grip-lat-pulldown', match: ['LAT MACHINE', 'PULLDOWN', 'PULL DOWN', 'LAT PULLDOWN'] },
+    { key: 'single-arm-tricep-pushdown', match: ['PUSHDOWN', 'PUSH DOWN', 'TRICIPITI AI CAVI'] },
+    { key: 'running', match: ['TAPIS', 'TAPIS ROULANT', 'CORSA', 'RUNNING'] },
+  ];
+  const normName = (t) => String(t || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^A-Z0-9]+/g, ' ').trim();
+  function animFor(name) {
+    const k = ` ${normName(name)} `;
+    const a = ANIMS.find((x) => x.match.some((m) => k.includes(` ${m} `)));
+    return a ? a.key : null;
+  }
+  let animGender = store.get('animGender', 'm');
+  function animHtml(name) {
+    const key = animFor(name);
+    if (!key) return '';
+    return `
+      <figure class="anim">
+        <video src="anim/${key}-${animGender}.mp4" autoplay loop muted playsinline preload="auto" aria-label="Animazione dell'esercizio"></video>
+        <figcaption>Animazione indicativa · <a href="https://repdb.co" target="_blank" rel="noopener">RepDB</a> (CC BY-NC 4.0)</figcaption>
+      </figure>`;
+  }
+
   function renderHow(name) {
     const k = keyOf(name);
     const yt = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(name.toLowerCase() + ' esecuzione corretta');
     return `
       <div class="how">
         <h3>Come si fa</h3>
+        ${animHtml(name)}
         <div class="media" data-media="${esc(k)}"></div>
         <div class="row">
           <a class="btn btn-small" href="${esc(yt)}" target="_blank" rel="noopener">▶ YouTube</a>
@@ -425,7 +451,8 @@
               <div class="muted">${it.details.map(esc).join(' · ')}</div>
             </div>
             ${it.durationSec ? `<button class="play" data-act="extra-timer" data-i="${i}" aria-label="Avvia timer">▶</button>` : ''}
-          </div>`).join('')}
+          </div>
+          ${animHtml(it.name)}`).join('')}
       </div>`;
   }
 
@@ -473,6 +500,13 @@
       </div>
       <button class="btn btn-primary btn-block" data-act="import">📄 Carica scheda aggiornata o nuova</button>
       <p class="small muted">Se il trainer aggiorna la scheda, scarica di nuovo il file da Drive e caricalo qui: progressi e storico restano.</p>
+
+      <div class="section-title">Animazioni</div>
+      <div class="row">
+        <button class="btn ${animGender === 'm' ? 'btn-primary' : ''}" data-act="anim-gender" data-g="m">Manichino uomo</button>
+        <button class="btn ${animGender === 'f' ? 'btn-primary' : ''}" data-act="anim-gender" data-g="f">Manichino donna</button>
+      </div>
+      <p class="small muted">Animazioni di prova: <a href="https://repdb.co" target="_blank" rel="noopener">RepDB</a>, anteprima con licenza CC BY-NC 4.0.</p>
 
       <div class="section-title">Backup</div>
       <div class="row">
@@ -770,6 +804,11 @@
         startTimer(it.sec, it.name, 'cardio');
         break;
       }
+      case 'anim-gender':
+        animGender = el.dataset.g;
+        store.set('animGender', animGender);
+        render();
+        break;
       case 'extra-timer': {
         const it = scheda.extras[view.i].items[+el.dataset.i];
         ensureAudio();
