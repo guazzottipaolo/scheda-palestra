@@ -20,7 +20,7 @@ App web installabile sul telefono (PWA) per leggere in palestra la scheda di all
 - Mai password, token o chiavi nei file o nel repository; nessun nome di persona nei file pubblici.
 
 ## Comandi utili
-- Provarla in locale: `python -m http.server 8765` dalla cartella, poi http://localhost:8765 (come in `.claude\launch.json`; sul mini PC Python non c'è).
+- Provarla in locale: `python -m http.server 8765` dalla cartella, poi http://localhost:8765 (come in `.claude\launch.json`).
 - Pubblicare: commit e `git push origin main`; GitHub Pages si aggiorna da solo (tiene la cache circa 10 minuti).
 
 ## Convenzioni
